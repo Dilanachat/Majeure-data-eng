@@ -8,8 +8,14 @@
 # ==============================================================================
 
 SHELL        := /bin/sh
+# Si le venv est déjà activé (VIRTUAL_ENV défini), on utilise python directement
+ifdef VIRTUAL_ENV
+PYTHON       := python
+RUN          :=
+else
 PYTHON       := uv run python
 RUN          := uv run
+endif
 VENV_DIR     := .venv
 PYTHONPATH   ?= .
 export PYTHONPATH
@@ -97,29 +103,45 @@ doctor: check-uv check-venv ## Diagnostique l'environnement de travail
 
 
 # ==============================================================================
-# Pipeline ML  [A COMPLETER]
+# Pipeline ML
 # ==============================================================================
 
-data: ## Prepare/genere le jeu de donnees dans data/
-	# TODO (S0) : appeler votre script de preparation de donnees
+data: check-venv ## Echantillonne les donnees (20 000 lignes) et construit les features -> data/train_features.csv
+	@echo "$(YELLOW)>> Preparation des donnees...$(RESET)"
+	$(PYTHON) -c "\
+from src.data import load_data, sample_stratified; \
+from src.feature import build_features; \
+df = build_features(sample_stratified(load_data())); \
+df.to_csv('data/train_features.csv', index=False); \
+print(f'Sauvegarde : data/train_features.csv  ({len(df):,} lignes x {df.shape[1]} colonnes)')"
+	@echo "$(GREEN)[OK] Donnees prete$(RESET)"
 
-train: ## Entraine la baseline -> models/model.joblib (C=.. MAX_ITER=..)
-	# TODO (S5) : $(PYTHON) -m mlproject.train --c $(C) --max-iter $(MAX_ITER)
+train: check-venv ## Entraine le modele choisi avec GridSearchCV + log MLflow (MODEL=rf|xgb|lgbm|all)
+	@echo "$(YELLOW)>> Entrainement du modele : $(MODEL)...$(RESET)"
+	$(PYTHON) -m src.train --model $(MODEL)
+	@echo "$(GREEN)[OK] Entrainement termine$(RESET)"
 
-train-models: ## Compare RF / XGBoost / LightGBM (GridSearchCV) + SHAP (CV=.. SCORING=..)
-	# TODO (S7) : $(PYTHON) -m mlproject.train_models --cv $(CV) --scoring $(SCORING)
+train-models: check-venv ## Entraine et compare RF + XGBoost + LightGBM -> MLflow
+	@echo "$(YELLOW)>> Comparaison des 3 modeles...$(RESET)"
+	$(PYTHON) -m src.train --model all
+	@echo "$(GREEN)[OK] Voir resultats sur http://127.0.0.1:$(MLFLOW_PORT)$(RESET)"
 
-train-optuna: ## Optimise RF / XGBoost / LightGBM avec Optuna (N_TRIALS=.. CV=..)
-	# TODO (S6) : $(PYTHON) -m mlproject.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
+train-optuna: ## Optimise les hyperparametres avec Optuna (N_TRIALS=.. CV=..)
+	# TODO (S6) : $(PYTHON) -m src.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
 
-mlflow: ## Demarre le serveur MLflow (docker compose)
-	# TODO (S5) : docker compose -f docker-compose.yml up -d mlflow
+mlflow: check-venv ## Demarre le serveur MLflow local (sqlite) sur le port 5000
+	@echo "$(YELLOW)>> Demarrage MLflow sur http://127.0.0.1:$(MLFLOW_PORT)$(RESET)"
+	$(RUN) mlflow server \
+		--host 127.0.0.1 \
+		--port $(MLFLOW_PORT) \
+		--backend-store-uri sqlite:///mlflow.db \
+		--default-artifact-root ./mlruns
 
 api: ## Lance l'API FastAPI en rechargement auto (voir API_HOST/API_PORT)
-	# TODO (S12) : $(RUN) uvicorn mlproject.api:app --reload --host $(API_HOST) --port $(API_PORT)
+	# TODO (S12) : $(RUN) uvicorn src.api:app --reload --host $(API_HOST) --port $(API_PORT)
 
-frontend: ## Lance le frontend Streamlit (voir FRONTEND_PORT, API_URL)
-	# TODO (S14bis) : $(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
+frontend: ## Lance le frontend Streamlit (voir FRONTEND_PORT)
+	# TODO (S14) : $(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
 
 
 # ==============================================================================
@@ -143,16 +165,16 @@ docker-down: ## Arrete et supprime les conteneurs (conserve les volumes)
 # Qualite  [A COMPLETER]
 # ==============================================================================
 
-lint: ## Verifie le style (ruff)
-	# TODO : $(RUN) ruff check mlproject
+lint: check-venv ## Verifie le style (ruff)
+	$(RUN) ruff check src/
 
-format: ## Formate le code (ruff)
-	# TODO : $(RUN) ruff format mlproject
+format: check-venv ## Formate le code (ruff)
+	$(RUN) ruff format src/
 
-type: ## Verifie les types (mypy)
-	# TODO : $(RUN) mypy mlproject
+type: check-venv ## Verifie les types (mypy)
+	$(RUN) mypy src/
 
-test: ## Lance les tests (pytest)
-	# TODO : $(RUN) pytest
+test: check-venv ## Lance les tests (pytest)
+	$(RUN) pytest
 
 check: lint type test ## Workflow qualite complet (lint + types + tests)
