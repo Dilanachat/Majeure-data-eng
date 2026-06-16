@@ -19,7 +19,6 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
 import joblib
-import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field

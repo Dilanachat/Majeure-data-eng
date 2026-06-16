@@ -6,7 +6,6 @@ from src.config import (
     COMPOUND_ORDER,
     PIT_WINDOW_START,
     PIT_WINDOW_END,
-    NEW_FEATURES,
     TARGET,
 )
 
