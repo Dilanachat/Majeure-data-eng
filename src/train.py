@@ -360,7 +360,8 @@ def print_comparison(results: dict) -> str:
     print(f"{'Modèle':<22} {'F1':>6} {'AUC':>7} {'Accuracy':>10} {'Recall':>8}")
     print("-" * 55)
 
-    best_name, best_auc = None, 0.0
+    best_name: str = ""
+    best_auc = 0.0
     for name, res in results.items():
         m = res["metrics"]
         print(

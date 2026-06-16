@@ -276,7 +276,7 @@ def run_all_experiments(
         print(f"  {name}")
         print(f"{'='*50}")
 
-        model  = cfg["train_fn"](X_train, y_train, **cfg["params"])
+        model  = cfg["train_fn"](X_train, y_train, **cfg["params"])  # type: ignore[operator, arg-type]
         y_pred  = model.predict(X_test)
         y_proba = model.predict_proba(X_test)[:, 1]
         metrics = compute_metrics(y_test, y_pred, y_proba)
@@ -287,7 +287,7 @@ def run_all_experiments(
         run_id = log_model_to_mlflow(
             model=model,
             model_name=name,
-            params=cfg["params"],
+            params=cfg["params"],  # type: ignore[arg-type]
             metrics=metrics,
             X_train=X_train,
             y_test=y_test,

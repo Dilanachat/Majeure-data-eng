@@ -113,7 +113,7 @@ def evaluate_model(model_uri: str | None = None, validate: bool = True):
 
     with mlflow.start_run(run_name="evaluate"):
         # S11-2a : tracabilite — logger le jeu d'evaluation comme dataset MLflow
-        dataset = mlflow.data.from_pandas(
+        dataset = mlflow.data.from_pandas(  # type: ignore[attr-defined]
             eval_df,
             source=str(DATA_PATH),
             targets=TARGET,

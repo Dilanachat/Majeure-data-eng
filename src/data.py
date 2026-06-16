@@ -104,7 +104,7 @@ def plot_correlation(df: pd.DataFrame) -> None:
 def sample_stratified(
     df: pd.DataFrame,
     n_target: int = SAMPLE_N_TARGET,
-    strata_cols: list[str] = None,
+    strata_cols: list[str] | None = None,
     min_per_group: int = SAMPLE_MIN_PER_GROUP,
     random_state: int = SAMPLE_RANDOM_STATE,
 ) -> pd.DataFrame:

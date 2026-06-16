@@ -63,7 +63,7 @@ def log_dataset(df: pd.DataFrame, context: str, name: str = "dataset") -> None:
     name    : nom logique affiché dans l'UI
     """
     # TODO (S5-9) implémenté
-    dataset = mlflow.data.from_pandas(
+    dataset = mlflow.data.from_pandas(  # type: ignore[attr-defined]
         df,
         source=str(DATA_PATH),
         targets=TARGET,
