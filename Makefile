@@ -40,7 +40,9 @@ RESET  := $(shell printf '\033[0m')
 
 .PHONY: help \
         check-uv check-venv venv-create install sync deps-sync lock reset-env doctor \
-        data train train-models train-optuna mlflow api frontend \
+        data train train-models train-optuna evaluate \
+        mlflow mlflow-local mlflow-run mlflow-down \
+        api frontend \
         docker-build docker-run docker-up docker-down \
         lint format type test check
 
@@ -126,8 +128,15 @@ train-models: check-venv ## Entraine et compare RF + XGBoost + LightGBM -> MLflo
 	$(PYTHON) -m src.train --model all
 	@echo "$(GREEN)[OK] Voir resultats sur http://127.0.0.1:$(MLFLOW_PORT)$(RESET)"
 
-train-optuna: ## Optimise les hyperparametres avec Optuna (N_TRIALS=.. CV=..)
-	# TODO (S6) : $(PYTHON) -m src.train_optuna --n-trials $(N_TRIALS) --cv $(CV)
+train-optuna: check-venv ## Optimise les hyperparametres avec Optuna (MODEL=rf|xgb|lgbm|all N_TRIALS=30)
+	@echo "$(YELLOW)>> Optimisation Optuna : $(MODEL) — $(N_TRIALS) trials...$(RESET)"
+	$(PYTHON) -m src.train --model $(MODEL) --optimizer optuna --n-trials $(N_TRIALS)
+	@echo "$(GREEN)[OK] Voir resultats sur http://127.0.0.1:$(MLFLOW_PORT)$(RESET)"
+
+evaluate: check-venv ## Evalue + valide la derniere version du modele (mlflow.evaluate + seuils)
+	@echo "$(YELLOW)>> Evaluation du dernier modele...$(RESET)"
+	$(PYTHON) -m src.evaluate
+	@echo "$(GREEN)[OK] Evaluation terminee$(RESET)"
 
 mlflow: check-venv ## Demarre le serveur MLflow local (sqlite) sur le port 5000
 	@echo "$(YELLOW)>> Demarrage MLflow sur http://127.0.0.1:$(MLFLOW_PORT)$(RESET)"
@@ -136,6 +145,22 @@ mlflow: check-venv ## Demarre le serveur MLflow local (sqlite) sur le port 5000
 		--port $(MLFLOW_PORT) \
 		--backend-store-uri sqlite:///mlflow.db \
 		--default-artifact-root ./mlruns
+
+mlflow-local: check-venv ## Demarre MLflow sans docker (sqlite + serve-artifacts) -> http://127.0.0.1:5000
+	@echo "$(YELLOW)>> Demarrage MLflow local sur http://$(API_HOST):$(MLFLOW_PORT)$(RESET)"
+	$(PYTHON) -m mlflow server \
+		--backend-store-uri sqlite:///mlflow.db \
+		--artifacts-destination ./mlartifacts --serve-artifacts \
+		--host $(API_HOST) --port $(MLFLOW_PORT)
+
+mlflow-run: check-venv ## Lance un entry point MLproject dans le venv courant (ENTRY=train PARAMS=)
+	MLFLOW_TRACKING_URI="$$($(PYTHON) -c 'from src.config import MLFLOW_TRACKING_URI; print(MLFLOW_TRACKING_URI)')" \
+	$(PYTHON) -m mlflow run . --env-manager local \
+		--experiment-name "$$($(PYTHON) -c 'from src.config import MLFLOW_EXPERIMENT; print(MLFLOW_EXPERIMENT)')" \
+		-e $(ENTRY) $(PARAMS)
+
+mlflow-down: ## Arrete le serveur MLflow (docker compose)
+	docker compose down
 
 api: ## Lance l'API FastAPI en rechargement auto (voir API_HOST/API_PORT)
 	# TODO (S12) : $(RUN) uvicorn src.api:app --reload --host $(API_HOST) --port $(API_PORT)
