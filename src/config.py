@@ -132,3 +132,24 @@ MODEL_FEATURES: list[str] = NUMERICAL_COLS + NEW_FEATURES
 # ── MLflow ───────────────────────────────────────────────────────────────────
 MLFLOW_TRACKING_URI = "http://127.0.0.1:5000"
 MLFLOW_EXPERIMENT   = "F1-PitStop-Prediction"
+
+MLFLOW_EXPERIMENT_DESCRIPTION = (
+    "Prédiction de l'arrêt aux stands au tour suivant (PitNextLap). "
+    "Dataset F1 2022-2025, 20 000 lignes échantillonnées de manière stratifiée. "
+    "Modèles : RandomForest, XGBoost, LightGBM — sélection par GridSearchCV."
+)
+
+MLFLOW_EXPERIMENT_TAGS: dict[str, str] = {
+    "project":  "F1-PitStop",
+    "task":     "binary-classification",
+    "target":   TARGET,
+    "team":     "Majeure Data",
+}
+
+# Alias utilisé par tracking.py pour la traçabilité des données
+DATA_PATH = RAW_DATA
+
+# ── Évaluation et Model Registry ─────────────────────────────────────────────
+MODEL_NAME       = "F1-PitStop-Classifier"
+EVAL_F1_MIN      = 0.50   # seuil minimum F1 (classe pit stop)
+EVAL_ROC_AUC_MIN = 0.80   # seuil minimum AUC-ROC
