@@ -46,7 +46,9 @@ from sklearn.metrics import (
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 
-from src.config import TARGET, MODEL_FEATURES, MLFLOW_TRACKING_URI, MODEL_NAME
+import joblib
+
+from src.config import TARGET, MODEL_FEATURES, MLFLOW_TRACKING_URI, MODEL_NAME, MODEL_DIR
 from src.data import load_data, sample_stratified
 from src.feature import build_features
 from src.model import split_data
@@ -257,6 +259,8 @@ def train(model_key: str, X_train, X_test, y_train, y_test, df_feat=None) -> dic
         run_id = run.info.run_id
 
     mlflow.register_model(f"runs:/{run_id}/model", MODEL_NAME)
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    joblib.dump(best_model, MODEL_DIR / "model.joblib")
     print(f"  Run loggé → {run_id}")
     print(f"  F1={metrics['f1']} | AUC={metrics['roc_auc']}")
 
@@ -339,6 +343,8 @@ def train_optuna(
         run_id = run.info.run_id
 
     mlflow.register_model(f"runs:/{run_id}/model", MODEL_NAME)
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    joblib.dump(best_model, MODEL_DIR / "model.joblib")
     print(f"  Run loggé → {run_id}")
     print(f"  F1={metrics['f1']} | AUC={metrics['roc_auc']}")
 

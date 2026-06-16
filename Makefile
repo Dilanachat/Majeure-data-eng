@@ -162,8 +162,9 @@ mlflow-run: check-venv ## Lance un entry point MLproject dans le venv courant (E
 mlflow-down: ## Arrete le serveur MLflow (docker compose)
 	docker compose down
 
-api: ## Lance l'API FastAPI en rechargement auto (voir API_HOST/API_PORT)
-	# TODO (S12) : $(RUN) uvicorn src.api:app --reload --host $(API_HOST) --port $(API_PORT)
+api: check-venv ## Lance l'API FastAPI en rechargement auto (voir API_HOST/API_PORT)
+	@echo "$(YELLOW)>> Demarrage API sur http://$(API_HOST):$(API_PORT)$(RESET)"
+	$(RUN) uvicorn src.api:app --reload --host $(API_HOST) --port $(API_PORT)
 
 frontend: ## Lance le frontend Streamlit (voir FRONTEND_PORT)
 	# TODO (S14) : $(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)

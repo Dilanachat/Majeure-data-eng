@@ -3,6 +3,7 @@ from pathlib import Path
 # ── Chemins ─────────────────────────────────────────────────────────────────
 ROOT_DIR   = Path(__file__).parent.parent
 DATA_DIR   = ROOT_DIR / "data"
+MODEL_DIR  = ROOT_DIR / "models"
 RAW_DATA   = DATA_DIR / "train.csv"
 FEAT_DATA  = DATA_DIR / "train_features.csv"
 
