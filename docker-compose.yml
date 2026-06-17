@@ -1,0 +1,75 @@
+# Seance 14 - TP docker-compose : orchestrez votre stack de classification.
+#
+# Services : mlflow (suivi), train (entrainement one-shot, profil "train"),
+#            api (FastAPI) et frontend (Streamlit).
+#
+# Commandes (depuis la racine du projet) :
+#   docker compose up -d mlflow
+#   docker compose --profile train run --rm train
+#   docker compose up -d api frontend
+#   -> API sur http://localhost:8000, frontend sur http://localhost:8501
+
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.13.0
+    command: >
+      mlflow server
+      --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
+      --allowed-hosts "*"
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/mlflow
+
+  train:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.train
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    depends_on:
+      - mlflow
+    volumes:
+      - ./data:/app/data:ro
+      - models_data:/app/models
+    profiles:
+      - train
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    # S14-1 : exposition du port 8000
+    ports:
+      - "8000:8000"
+    # S14-2 : volume modele en lecture seule
+    volumes:
+      - models_data:/app/models:ro
+    # S14-3 : healthcheck sur GET /health
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    # S14-4 : URL interne de l'API (resolution DNS Docker)
+    environment:
+      API_URL: http://api:8000
+    # S14-5 : exposition du port 8501
+    ports:
+      - "8501:8501"
+    # S14-6 : attend que l'API soit saine
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  mlflow_data:
+  models_data:
