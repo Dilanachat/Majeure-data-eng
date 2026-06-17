@@ -166,8 +166,9 @@ api: check-venv ## Lance l'API FastAPI en rechargement auto (voir API_HOST/API_P
 	@echo "$(YELLOW)>> Demarrage API sur http://$(API_HOST):$(API_PORT)$(RESET)"
 	$(RUN) uvicorn src.api:app --reload --host $(API_HOST) --port $(API_PORT)
 
-frontend: ## Lance le frontend Streamlit (voir FRONTEND_PORT)
-	# TODO (S14) : $(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
+frontend: check-venv ## Lance le frontend Streamlit (voir FRONTEND_PORT)
+	@echo "$(YELLOW)>> Demarrage Streamlit sur http://$(API_HOST):$(FRONTEND_PORT)$(RESET)"
+	$(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
 
 
 # ==============================================================================
@@ -175,16 +176,16 @@ frontend: ## Lance le frontend Streamlit (voir FRONTEND_PORT)
 # ==============================================================================
 
 docker-build: ## Construit l'image d'entrainement
-	# TODO (S8) : docker build -f docker/Dockerfile.train -t mlproject-train .
+	docker build -f docker/Dockerfile.train -t mlproject-train .
 
 docker-run: ## Lance l'entrainement en conteneur
-	# TODO (S8) : docker run --rm -v "$(CURDIR)/../models:/app/models" mlproject-train
+	docker run --rm -v "$(CURDIR)/models:/app/models" mlproject-train
 
 docker-up: ## Demarre la stack (mlflow, api, frontend)
-	# TODO (S14) : docker compose -f docker-compose.yml up -d --build mlflow api frontend
+	docker compose -f docker-compose.yml up -d --build mlflow api frontend
 
 docker-down: ## Arrete et supprime les conteneurs (conserve les volumes)
-	# TODO (S14) : docker compose -f docker-compose.yml down
+	docker compose -f docker-compose.yml down
 
 
 # ==============================================================================
