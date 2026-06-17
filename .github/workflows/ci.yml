@@ -1,34 +1,83 @@
-name: CI Quality Check
+name: CI
 
+# S18-1 : push, pull_request et lancement manuel
 on:
   push:
-    branches:
-      - main
+  pull_request:
+  workflow_dispatch:
+
+# Annule un run en cours si on repousse sur la meme ref (economise des minutes).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Qualite : lint (ruff) + types (mypy) + tests (pytest)
+  # ---------------------------------------------------------------------------
   quality:
-    name: Code Quality
+    name: Qualite (lint + types + tests)
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     steps:
-      - name: Checkout repository
+      - name: Checkout du depot
         uses: actions/checkout@v4
 
-      - name: Setup uv
+      - name: Installation de uv (avec cache)
         uses: astral-sh/setup-uv@v5
         with:
-          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
-      - name: Install dependencies
-        run: make install
+      # S18-2 : installe le projet + les outils dev (ruff, mypy, pytest)
+      - name: Installation des dependances (projet + dev)
+        run: uv sync --extra dev
 
-      - name: Run linter (ruff)
-        run: make lint
+      # S18-3 : lint ruff sur src/
+      - name: Lint (ruff)
+        run: uv run ruff check src/
 
-      - name: Run type checker (mypy)
-        run: make type
+      # S18-4 : types mypy sur src/
+      - name: Types (mypy)
+        run: uv run mypy src/
 
-      - name: Run tests (pytest)
-        run: make test
+      # S18-5 : tests pytest
+      - name: Tests (pytest)
+        run: uv run pytest
+
+  # ---------------------------------------------------------------------------
+  # 2. Entrainement baseline + publication du modele en artefact
+  # ---------------------------------------------------------------------------
+  train:
+    name: Entrainement (Continuous Training)
+    runs-on: ubuntu-latest
+    # S18-6 : ne s'execute que si quality est vert
+    needs: quality
+    steps:
+      - name: Checkout du depot
+        uses: actions/checkout@v4
+
+      - name: Installation de uv (avec cache)
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Installation des dependances
+        run: uv sync
+
+      # S18-7 : entrainement de la baseline sur l'echantillon CI
+      - name: Entrainement de la baseline (RandomForest)
+        env:
+          MLFLOW_TRACKING_URI: sqlite:///mlflow.db
+          TRAIN_DATA_PATH: data/train_sample.csv
+        run: uv run python -m src.train --model rf
+
+      # S18-8 : publication du modele en artefact telechargeable
+      - name: Publication du modele en artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model
+          path: models/model.joblib

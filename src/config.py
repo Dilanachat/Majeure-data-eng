@@ -1,10 +1,11 @@
+import os
 from pathlib import Path
 
 # ── Chemins ─────────────────────────────────────────────────────────────────
 ROOT_DIR   = Path(__file__).parent.parent
 DATA_DIR   = ROOT_DIR / "data"
 MODEL_DIR  = ROOT_DIR / "models"
-RAW_DATA   = DATA_DIR / "train.csv"
+RAW_DATA   = Path(os.getenv("TRAIN_DATA_PATH", str(DATA_DIR / "train.csv")))
 FEAT_DATA  = DATA_DIR / "train_features.csv"
 
 # ── Cible ────────────────────────────────────────────────────────────────────
@@ -131,7 +132,7 @@ NEW_FEATURES: list[str] = (
 MODEL_FEATURES: list[str] = NUMERICAL_COLS + NEW_FEATURES
 
 # ── MLflow ───────────────────────────────────────────────────────────────────
-MLFLOW_TRACKING_URI = "http://127.0.0.1:5000"
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
 MLFLOW_EXPERIMENT   = "F1-PitStop-Prediction"
 
 MLFLOW_EXPERIMENT_DESCRIPTION = (

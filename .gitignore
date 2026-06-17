@@ -1,5 +1,5 @@
 # Données (trop lourdes pour git)
-data/
+data/train.csv
 
 # MLflow
 mlflow.db
