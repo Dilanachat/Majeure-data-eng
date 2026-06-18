@@ -18,3 +18,8 @@ dist/
 # OS
 .DS_Store
 models/
+
+# Secrets / cles SSH
+*.key
+*.pem
+.env

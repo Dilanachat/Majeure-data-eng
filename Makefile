@@ -43,7 +43,8 @@ RESET  := $(shell printf '\033[0m')
         data train train-models train-optuna evaluate \
         mlflow mlflow-local mlflow-run mlflow-down \
         api frontend \
-        docker-build docker-run docker-up docker-down \
+        free-ports workflow-docker \
+        docker-build docker-run docker-up docker-down docker-reset \
         lint format type test check
 
 
@@ -175,6 +176,30 @@ frontend: check-venv ## Lance le frontend Streamlit (voir FRONTEND_PORT)
 # Docker  [A COMPLETER]
 # ==============================================================================
 
+free-ports: ## Libere les ports 5000 8000 8501 (tue les processus occupants)
+	@for port in 5000 8000 8501; do \
+		pid=$$(lsof -ti tcp:$$port 2>/dev/null); \
+		if [ -n "$$pid" ]; then \
+			echo "$(YELLOW)>> Port $$port occupe par PID $$pid, liberation...$(RESET)"; \
+			kill -9 $$pid 2>/dev/null || true; \
+		fi; \
+	done
+	@echo "$(GREEN)[OK] Ports liberes$(RESET)"
+
+workflow-docker: free-ports ## Workflow complet : libere ports, demarre MLflow, entraine, demarre la stack
+	@echo "$(YELLOW)>> Demarrage de MLflow...$(RESET)"
+	docker compose up -d --build mlflow
+	@echo "$(YELLOW)>> Attente que MLflow soit pret (15s)...$(RESET)"
+	sleep 15
+	@echo "$(YELLOW)>> Entrainement du modele...$(RESET)"
+	docker compose --profile train run --rm train
+	@echo "$(YELLOW)>> Demarrage de l'API et du frontend...$(RESET)"
+	docker compose up -d --build api frontend
+	@echo "$(GREEN)[OK] Stack lancee !$(RESET)"
+	@echo "  API      : http://localhost:$(API_PORT)/docs"
+	@echo "  Frontend : http://localhost:$(FRONTEND_PORT)"
+	@echo "  MLflow   : http://localhost:$(MLFLOW_PORT)"
+
 docker-build: ## Construit l'image d'entrainement
 	docker build -f docker/Dockerfile.train -t mlproject-train .
 
@@ -186,6 +211,11 @@ docker-up: ## Demarre la stack (mlflow, api, frontend)
 
 docker-down: ## Arrete et supprime les conteneurs (conserve les volumes)
 	docker compose -f docker-compose.yml down
+
+docker-reset: ## Arrete la stack ET efface les volumes (donnees perdues)
+	@echo "$(RED)>> Suppression des conteneurs et des volumes...$(RESET)"
+	docker compose -f docker-compose.yml down -v
+	@echo "$(GREEN)[OK] Stack et volumes supprimes$(RESET)"
 
 
 # ==============================================================================
