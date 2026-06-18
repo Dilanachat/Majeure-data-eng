@@ -29,6 +29,7 @@ MAX_ITER     ?= 1000
 CV           ?= 5
 SCORING      ?= roc_auc
 N_TRIALS     ?= 30
+MODEL        ?= rf
 
 # Couleurs ANSI
 YELLOW := $(shell printf '\033[33m')
@@ -44,6 +45,7 @@ RESET  := $(shell printf '\033[0m')
         data train train-models train-optuna evaluate \
         mlflow mlflow-local mlflow-run mlflow-down \
         api frontend \
+        workflow-train workflow-local \
         free-ports workflow-docker \
         docker-build docker-run docker-up docker-down docker-reset \
         airflow airflow-password \
@@ -171,6 +173,41 @@ api: check-venv ## Lance l'API FastAPI en rechargement auto (voir API_HOST/API_P
 
 frontend: check-venv ## Lance le frontend Streamlit (voir FRONTEND_PORT)
 	@echo "$(YELLOW)>> Demarrage Streamlit sur http://$(API_HOST):$(FRONTEND_PORT)$(RESET)"
+	$(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
+
+
+# ==============================================================================
+# Workflows reproductibles
+# ==============================================================================
+
+workflow-train: install data train-models evaluate ## Pipeline ML complet : install -> data -> train (RF+XGB+LGBM) -> evaluate
+	@echo "$(GREEN)[OK] Pipeline d'entrainement termine$(RESET)"
+	@echo "  Resultats MLflow : http://127.0.0.1:$(MLFLOW_PORT)"
+
+workflow-local: install ## Workflow local complet : install -> mlflow -> data -> train -> api -> frontend
+	@echo "$(YELLOW)>> Demarrage MLflow en arriere-plan...$(RESET)"
+	$(RUN) mlflow server \
+		--host 127.0.0.1 --port $(MLFLOW_PORT) \
+		--backend-store-uri sqlite:///mlflow.db \
+		--default-artifact-root ./mlruns &
+	@sleep 3
+	@echo "$(YELLOW)>> Preparation des donnees...$(RESET)"
+	$(PYTHON) -c "\
+from src.data import load_data, sample_stratified; \
+from src.feature import build_features; \
+df = build_features(sample_stratified(load_data())); \
+df.to_csv('data/train_features.csv', index=False)"
+	@echo "$(YELLOW)>> Entrainement du modele RF...$(RESET)"
+	$(PYTHON) -m src.train --model rf
+	@echo "$(YELLOW)>> Evaluation...$(RESET)"
+	$(PYTHON) -m src.evaluate
+	@echo "$(YELLOW)>> Demarrage API en arriere-plan...$(RESET)"
+	$(RUN) uvicorn src.api:app --host $(API_HOST) --port $(API_PORT) &
+	@sleep 2
+	@echo "$(GREEN)[OK] Stack locale lancee$(RESET)"
+	@echo "  API      : http://$(API_HOST):$(API_PORT)/docs"
+	@echo "  MLflow   : http://127.0.0.1:$(MLFLOW_PORT)"
+	@echo "$(YELLOW)>> Demarrage Streamlit (foreground)...$(RESET)"
 	$(RUN) streamlit run frontend/app.py --server.port $(FRONTEND_PORT)
 
 
