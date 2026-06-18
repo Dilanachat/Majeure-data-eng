@@ -443,15 +443,36 @@ with tab_home:
 
         st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
         st.markdown('<div class="sh">Architecture</div>', unsafe_allow_html=True)
-        st.code("""data/train.csv  →  feature.py  →  train.py  →  model.joblib
-                                    │
-                               MLflow :5000
-                                    │
-                          api.py  :8000  (FastAPI)
-                                    │
-                       app.py  :8501  (Streamlit)  ← ici
-                                    │
-                        Airflow :8080  (re-train hebdo)""", language=None)
+        st.markdown("""
+<div style="background:#161730; border:1px solid #2e3060; border-left:3px solid #E8002D;
+            border-radius:8px; padding:20px 24px; font-family:monospace; font-size:0.88rem;
+            color:#d0d0f0; line-height:2;">
+  <span style="color:#E8002D;">data/train.csv</span>
+  &nbsp;→&nbsp; <span style="color:#ffffff;">feature.py</span>
+  &nbsp;→&nbsp; <span style="color:#ffffff;">train.py</span>
+  &nbsp;→&nbsp; <span style="color:#E8002D;">model.joblib</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <span style="color:#9090b0;">MLflow</span>
+  <span style="color:#E8002D;">:5000</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <span style="color:#ffffff;">api.py</span>
+  <span style="color:#E8002D;">:8000</span>
+  <span style="color:#9090b0;">(FastAPI)</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <span style="color:#ffffff;">app.py</span>
+  <span style="color:#E8002D;">:8501</span>
+  <span style="color:#9090b0;">(Streamlit)</span>
+  <span style="color:#E8002D; font-weight:700;">← vous êtes ici</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <span style="color:#ffffff;">Airflow</span>
+  <span style="color:#E8002D;">:8080</span>
+  <span style="color:#9090b0;">(re-train hebdomadaire)</span>
+</div>
+""", unsafe_allow_html=True)
 
     with col_side:
         st.markdown('<div class="sh">Statistiques</div>', unsafe_allow_html=True)
