@@ -10,8 +10,9 @@ API_URL         = os.getenv("API_URL", "http://localhost:8000")
 MLFLOW_URI      = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 SAMPLE_CSV      = os.getenv("TRAIN_DATA_PATH", "data/train_sample.csv")
 EXPERIMENT_NAME = "F1-PitStop-Prediction"
-PUBLIC_API_URL    = os.getenv("PUBLIC_API_URL", API_URL)
-PUBLIC_MLFLOW_URL = os.getenv("PUBLIC_MLFLOW_URL", MLFLOW_URI)
+PUBLIC_API_URL      = os.getenv("PUBLIC_API_URL", API_URL)
+PUBLIC_MLFLOW_URL   = os.getenv("PUBLIC_MLFLOW_URL", MLFLOW_URI)
+PUBLIC_AIRFLOW_URL  = os.getenv("PUBLIC_AIRFLOW_URL", "http://88.96.50.33:8080")
 
 st.set_page_config(
     page_title="F1 Pit Stop AI",
@@ -394,6 +395,7 @@ with st.sidebar:
     st.markdown(f"""
 <a class="ext-link" href="{PUBLIC_API_URL}/docs" target="_blank">⚡&nbsp; API FastAPI — Docs interactives</a>
 <a class="ext-link" href="{PUBLIC_MLFLOW_URL}" target="_blank">📊&nbsp; MLflow — Tracking UI</a>
+<a class="ext-link" href="{PUBLIC_AIRFLOW_URL}" target="_blank">🔁&nbsp; Airflow — Orchestration</a>
 """, unsafe_allow_html=True)
 
     st.markdown('<div class="f1-stripe-sm"></div>', unsafe_allow_html=True)
@@ -655,7 +657,18 @@ with tab_eval:
 
                 st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
                 st.markdown('<div class="sh" style="font-size:1rem;">Hyperparamètres</div>', unsafe_allow_html=True)
-                st.json({k: v for k, v in params.items() if k != "model"})
+                hp = {k: v for k, v in params.items() if k != "model"}
+                rows_hp = "".join(
+                    f'<div style="padding:6px 0; border-bottom:1px solid #2e3060; display:flex; justify-content:space-between; align-items:center;">'
+                    f'<span style="color:#9090b0; font-size:0.85rem; letter-spacing:1px;">{k}</span>'
+                    f'<span style="color:#E8002D; font-family:\'Rajdhani\',sans-serif; font-size:1rem; font-weight:700;">{v}</span>'
+                    f'</div>'
+                    for k, v in hp.items()
+                )
+                st.markdown(
+                    f'<div style="background:#161730; border:1px solid #2e3060; border-radius:8px; padding:12px 18px;">{rows_hp}</div>',
+                    unsafe_allow_html=True
+                )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
