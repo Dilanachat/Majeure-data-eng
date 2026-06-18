@@ -192,7 +192,7 @@ workflow-docker: free-ports ## Workflow complet : libere ports, demarre MLflow, 
 	@echo "$(YELLOW)>> Attente que MLflow soit pret (15s)...$(RESET)"
 	sleep 15
 	@echo "$(YELLOW)>> Entrainement du modele...$(RESET)"
-	docker compose --profile train run --rm train
+	docker compose --profile train run --rm --build train
 	@echo "$(YELLOW)>> Demarrage de l'API et du frontend...$(RESET)"
 	docker compose up -d --build api frontend
 	@echo "$(GREEN)[OK] Stack lancee !$(RESET)"
