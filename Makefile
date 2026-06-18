@@ -23,6 +23,7 @@ API_HOST     ?= 127.0.0.1
 API_PORT     ?= 8000
 FRONTEND_PORT ?= 8501
 MLFLOW_PORT  := 5000
+AIRFLOW_PORT := 8080
 C            ?= 1.0
 MAX_ITER     ?= 1000
 CV           ?= 5
@@ -45,6 +46,7 @@ RESET  := $(shell printf '\033[0m')
         api frontend \
         free-ports workflow-docker \
         docker-build docker-run docker-up docker-down docker-reset \
+        airflow airflow-password \
         lint format type test check
 
 
@@ -216,6 +218,16 @@ docker-reset: ## Arrete la stack ET efface les volumes (donnees perdues)
 	@echo "$(RED)>> Suppression des conteneurs et des volumes...$(RESET)"
 	docker compose -f docker-compose.yml down -v
 	@echo "$(GREEN)[OK] Stack et volumes supprimes$(RESET)"
+
+airflow: ## Demarre Airflow (webserver + scheduler) sur http://localhost:8080
+	@echo "$(YELLOW)>> Demarrage Airflow...$(RESET)"
+	docker compose --profile airflow up -d airflow
+	@echo "$(GREEN)[OK] Airflow demarre sur http://localhost:$(AIRFLOW_PORT)$(RESET)"
+
+airflow-password: ## Affiche les identifiants Airflow admin
+	@echo "$(CYAN)Airflow UI : http://localhost:8080$(RESET)"
+	@echo "  Login    : admin"
+	@echo "  Password : admin"
 
 
 # ==============================================================================

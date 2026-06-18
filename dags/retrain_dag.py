@@ -1,8 +1,7 @@
-"""DAG Airflow - pipeline de re-entrainement du modele (squelette).
+"""DAG Airflow - pipeline de re-entrainement du modele.
 
 Seance 17 - TP Airflow
-    Pipeline simple : preparation des donnees -> entrainement -> controle
-    qualite. Completez les TODO (S17-n).
+    Pipeline : preparation des donnees -> entrainement -> controle qualite.
 """
 from __future__ import annotations
 
@@ -14,7 +13,6 @@ from airflow.operators.python import PythonOperator
 
 logger = logging.getLogger(__name__)
 
-# f1 minimal du modele entraine pour que le pipeline soit considere comme reussi.
 QUALITY_THRESHOLD = 0.65
 
 default_args = {
@@ -25,31 +23,40 @@ default_args = {
 
 
 def task_prepare_data(**context) -> None:
-    # TODO (S17-1) : appeler le script/fonction qui (re)genere ou prepare votre
-    #               jeu de donnees dans data/ (ex. votre script de preparation)
-    raise NotImplementedError
+    # S17-1 : regenerer les features et sauvegarder dans data/train_features.csv
+    from src.data import load_data, sample_stratified
+    from src.feature import build_features
+
+    df = build_features(sample_stratified(load_data()))
+    df.to_csv("data/train_features.csv", index=False)
+    logger.info("Donnees preparees : %d lignes x %d colonnes", *df.shape)
 
 
 def task_train(**context) -> None:
-    # TODO (S17-2) :
-    #   - importer mlproject.train.train et l'appeler -> metrics = train()
-    #   - pousser metrics["f1"] dans XCom : context["ti"].xcom_push(key="f1", value=...)
-    raise NotImplementedError
+    # S17-2 : entrainer le modele RF et pousser le f1 dans XCom
+    from src.train import prepare_data, train
+
+    X_train, X_test, y_train, y_test, df_feat = prepare_data()
+    metrics = train("rf", X_train, X_test, y_train, y_test, df_feat)
+    context["ti"].xcom_push(key="f1", value=metrics["f1"])
+    logger.info("Entrainement termine — F1 : %.4f", metrics["f1"])
 
 
 def task_check_quality(**context) -> None:
-    # TODO (S17-3) :
-    #   - recuperer f1 = context["ti"].xcom_pull(task_ids="train", key="f1")
-    #   - si f1 < QUALITY_THRESHOLD, lever une ValueError (le pipeline echoue)
-    #   - sinon, logger un message de succes
-    raise NotImplementedError
+    # S17-3 : verifier que le F1 depasse le seuil minimum
+    f1 = context["ti"].xcom_pull(task_ids="train", key="f1")
+    if f1 < QUALITY_THRESHOLD:
+        raise ValueError(
+            f"Qualite insuffisante : F1={f1:.4f} < seuil={QUALITY_THRESHOLD}"
+        )
+    logger.info("Qualite validee — F1 : %.4f >= %.2f", f1, QUALITY_THRESHOLD)
 
 
 with DAG(
     dag_id="model_retraining",
     description="Prepare les donnees, reentraine le modele et controle sa qualite",
-    # TODO (S17-4) : definir le planning, ex. schedule="0 3 * * 1" (tous les lundis a 3h)
-    schedule=None,
+    # S17-4 : tous les lundis a 3h du matin
+    schedule="0 3 * * 1",
     start_date=datetime(2024, 1, 1),
     catchup=False,
     default_args=default_args,
@@ -59,4 +66,5 @@ with DAG(
     train_task = PythonOperator(task_id="train", python_callable=task_train)
     check = PythonOperator(task_id="check_quality", python_callable=task_check_quality)
 
-    # TODO (S17-5) : declarer l'ordre d'execution : prepare >> train_task >> check
+    # S17-5 : ordre d'execution
+    prepare >> train_task >> check
