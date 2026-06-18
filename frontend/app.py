@@ -311,6 +311,39 @@ div[data-testid="stDownloadButton"] button {
     font-family: 'Rajdhani', sans-serif !important;
     letter-spacing: 1px !important;
 }
+
+/* JSON viewer */
+div[data-testid="stJson"] {
+    background: #161730 !important;
+    border: 1px solid #2e3060 !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+}
+div[data-testid="stJson"] * { color: #d0d0f0 !important; }
+div[data-testid="stJson"] span[style*="color: var(--text-color)"] { color: #d0d0f0 !important; }
+.stJson { background: #161730 !important; }
+
+/* File uploader */
+div[data-testid="stFileUploader"] {
+    background: #161730 !important;
+    border: 2px dashed #2e3060 !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+}
+div[data-testid="stFileUploader"] * { color: #d0d0f0 !important; }
+div[data-testid="stFileUploader"] small { color: #9090b0 !important; }
+div[data-testid="stFileUploaderDropzone"] {
+    background: #161730 !important;
+    border: 2px dashed #E8002D55 !important;
+    border-radius: 8px !important;
+}
+div[data-testid="stFileUploaderDropzone"] * { color: #d0d0f0 !important; }
+div[data-testid="stFileUploaderDropzone"] button {
+    background: #E8002D !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 4px !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
