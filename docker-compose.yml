@@ -62,6 +62,7 @@ services:
     # S14-4 : URL interne de l'API (resolution DNS Docker)
     environment:
       API_URL: http://api:8000
+      MLFLOW_TRACKING_URI: http://mlflow:5000
     # S14-5 : exposition du port 8501
     ports:
       - "8501:8501"
