@@ -10,266 +10,307 @@ API_URL         = os.getenv("API_URL", "http://localhost:8000")
 MLFLOW_URI      = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
 SAMPLE_CSV      = os.getenv("TRAIN_DATA_PATH", "data/train_sample.csv")
 EXPERIMENT_NAME = "F1-PitStop-Prediction"
-
-# URL publiques pour les liens (déduites depuis l'URL courante ou env)
 PUBLIC_API_URL    = os.getenv("PUBLIC_API_URL", API_URL)
 PUBLIC_MLFLOW_URL = os.getenv("PUBLIC_MLFLOW_URL", MLFLOW_URI)
 
 st.set_page_config(
-    page_title="F1 Pit Stop AI — Dashboard",
+    page_title="F1 Pit Stop AI",
     page_icon="🏎️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── CSS ────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700;900&family=Rajdhani:wght@500;600;700&display=swap');
 
-/* Reset & base */
 html, body, [class*="css"] { font-family: 'Exo 2', sans-serif; }
-.stApp { background: #0a0a0f; color: #e8e8e8; }
+
+/* Fond principal — bleu nuit profond, pas noir pur */
+.stApp { background: #0b0c1a !important; color: #f0f0f0 !important; }
 
 /* Sidebar */
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0f0f1a 0%, #12121f 60%, #0a0a0f 100%);
-    border-right: 1px solid #2a2a3e;
+    background: linear-gradient(180deg, #11122a 0%, #0e0f22 100%) !important;
+    border-right: 2px solid #E8002D !important;
 }
-section[data-testid="stSidebar"] * { color: #e8e8e8 !important; }
+section[data-testid="stSidebar"] * { color: #f0f0f0 !important; }
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div { color: #f0f0f0 !important; }
 
-/* Header principal */
+/* Zone de contenu principal */
+.block-container { padding-top: 1.5rem !important; }
+
+/* ── HEADER ─────────────────────────────────────────────────── */
 .f1-header {
-    background: linear-gradient(135deg, #0f0f1a 0%, #1a0505 50%, #0f0f1a 100%);
-    border: 1px solid #E8002D33;
-    border-radius: 12px;
-    padding: 28px 36px;
-    margin-bottom: 24px;
+    background: linear-gradient(135deg, #1a0a0a 0%, #200d0d 40%, #16102a 100%);
+    border: 1px solid #E8002D55;
+    border-radius: 14px;
+    padding: 30px 40px;
+    margin-bottom: 20px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 40px #E8002D22;
 }
 .f1-header::before {
     content: '';
     position: absolute;
     top: 0; left: 0;
-    width: 6px; height: 100%;
-    background: linear-gradient(180deg, #E8002D, #ff6b35, #E8002D);
+    width: 7px; height: 100%;
+    background: linear-gradient(180deg, #ff0028, #E8002D, #ff6b35);
+    border-radius: 14px 0 0 14px;
 }
 .f1-header::after {
     content: '';
     position: absolute;
-    top: -50%; right: -10%;
-    width: 300px; height: 300px;
-    background: radial-gradient(circle, #E8002D11 0%, transparent 70%);
+    right: -5%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, #E8002D18 0%, transparent 70%);
     pointer-events: none;
 }
 .f1-title {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 3rem;
+    font-size: 3.2rem;
     font-weight: 700;
-    color: #ffffff;
-    letter-spacing: 3px;
+    color: #ffffff !important;
+    letter-spacing: 4px;
     text-transform: uppercase;
     margin: 0;
     line-height: 1;
+    text-shadow: 0 0 30px #E8002D44;
 }
 .f1-title span { color: #E8002D; }
 .f1-subtitle {
-    font-size: 0.95rem;
-    color: #888;
-    letter-spacing: 2px;
+    font-size: 0.9rem;
+    color: #a0a0c0 !important;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    margin-top: 6px;
+    margin-top: 8px;
 }
 .f1-badge {
     display: inline-block;
-    background: #E8002D;
-    color: white;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 2px;
     padding: 3px 10px;
-    border-radius: 2px;
+    border-radius: 3px;
     text-transform: uppercase;
-    margin-right: 8px;
+    margin-right: 6px;
+    margin-bottom: 10px;
 }
+.badge-red   { background: #E8002D; color: #fff !important; }
+.badge-white { background: transparent; border: 1px solid #ffffff55; color: #ccc !important; }
 
-/* Ligne de séparation */
+/* ── BANDES ─────────────────────────────────────────────────── */
 .f1-stripe {
     height: 3px;
-    background: linear-gradient(90deg, #E8002D 0%, #ff6b35 30%, #E8002D 60%, transparent 100%);
+    background: linear-gradient(90deg, #E8002D 0%, #ff6b35 40%, #E8002D 70%, transparent 100%);
     border-radius: 2px;
-    margin: 16px 0;
+    margin: 20px 0;
 }
 .f1-stripe-sm {
     height: 2px;
-    background: linear-gradient(90deg, #E8002D 0%, #ff6b35 50%, transparent 100%);
-    margin: 10px 0;
+    background: linear-gradient(90deg, #E8002D55 0%, #ff6b3522 60%, transparent 100%);
+    margin: 12px 0;
 }
 
-/* Cartes métriques */
+/* ── CARTES MÉTRIQUES ────────────────────────────────────────── */
 .metric-card {
-    background: linear-gradient(135deg, #12121f 0%, #1a1a2e 100%);
-    border: 1px solid #2a2a3e;
+    background: linear-gradient(135deg, #161730 0%, #1e2040 100%);
+    border: 1px solid #2e3060;
     border-top: 3px solid #E8002D;
-    border-radius: 8px;
-    padding: 18px 20px;
+    border-radius: 10px;
+    padding: 20px;
     text-align: center;
+    box-shadow: 0 2px 16px #00000044;
 }
-.metric-card .value {
+.metric-card .val {
     font-family: 'Rajdhani', sans-serif;
     font-size: 2rem;
     font-weight: 700;
-    color: #E8002D;
+    color: #E8002D !important;
     line-height: 1.1;
 }
-.metric-card .label {
-    font-size: 0.75rem;
-    color: #888;
-    letter-spacing: 1.5px;
+.metric-card .lbl {
+    font-size: 0.7rem;
+    color: #9090b0 !important;
+    letter-spacing: 2px;
     text-transform: uppercase;
     margin-top: 4px;
 }
-.metric-card .delta {
-    font-size: 0.8rem;
-    color: #aaa;
-    margin-top: 2px;
+.metric-card .dlt {
+    font-size: 0.78rem;
+    color: #c0c0d8 !important;
+    margin-top: 3px;
 }
 
-/* Cartes développeurs */
+/* ── CARTES DÉVELOPPEURS ─────────────────────────────────────── */
 .dev-card {
-    background: linear-gradient(135deg, #12121f, #1a1a2e);
-    border: 1px solid #2a2a3e;
+    background: linear-gradient(135deg, #161730, #1e2040);
+    border: 1px solid #2e3060;
     border-left: 3px solid #E8002D;
-    border-radius: 6px;
-    padding: 10px 14px;
+    border-radius: 8px;
+    padding: 11px 15px;
     margin: 6px 0;
 }
-.dev-name { font-weight: 700; font-size: 0.9rem; color: #fff; }
-.dev-role { font-size: 0.73rem; color: #888; margin-top: 2px; }
+.dev-name { font-weight: 700; font-size: 0.92rem; color: #ffffff !important; }
+.dev-role { font-size: 0.73rem; color: #9090b0 !important; margin-top: 3px; }
 
-/* Liens externes */
+/* ── LIENS SIDEBAR ───────────────────────────────────────────── */
 .ext-link {
     display: block;
-    background: #12121f;
-    border: 1px solid #2a2a3e;
-    border-radius: 6px;
-    padding: 8px 14px;
+    background: #161730;
+    border: 1px solid #2e3060;
+    border-radius: 7px;
+    padding: 9px 14px;
     margin: 5px 0;
     text-decoration: none;
-    font-size: 0.82rem;
-    color: #ccc !important;
-    transition: border-color 0.2s;
+    font-size: 0.83rem;
+    color: #d0d0f0 !important;
+    transition: all 0.2s;
 }
-.ext-link:hover { border-color: #E8002D; color: #fff !important; }
-.ext-link .icon { margin-right: 6px; }
-
-/* Statut */
-.status-dot-ok  { width:8px; height:8px; border-radius:50%; background:#00e676; display:inline-block; margin-right:6px; box-shadow: 0 0 6px #00e676; }
-.status-dot-err { width:8px; height:8px; border-radius:50%; background:#E8002D; display:inline-block; margin-right:6px; box-shadow: 0 0 6px #E8002D; }
-.status-row { display:flex; align-items:center; padding: 5px 0; font-size:0.85rem; }
-
-/* Prédiction résultat */
-.pred-box {
-    border-radius: 10px;
-    padding: 24px;
-    text-align: center;
-    margin: 12px 0;
+.ext-link:hover {
+    border-color: #E8002D;
+    background: #1e0a12;
+    color: #ffffff !important;
 }
+
+/* ── STATUT ──────────────────────────────────────────────────── */
+.status-row { display: flex; align-items: center; padding: 5px 0; font-size: 0.85rem; color: #d0d0f0 !important; }
+.dot-ok  { width:9px; height:9px; border-radius:50%; background:#00e676; display:inline-block; margin-right:8px; box-shadow: 0 0 8px #00e676aa; flex-shrink:0; }
+.dot-err { width:9px; height:9px; border-radius:50%; background:#E8002D; display:inline-block; margin-right:8px; box-shadow: 0 0 8px #E8002Daa; flex-shrink:0; }
+
+/* ── SECTION HEADER ──────────────────────────────────────────── */
+.sh {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ffffff !important;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding-left: 14px;
+    border-left: 4px solid #E8002D;
+    margin: 24px 0 12px 0;
+    line-height: 1.3;
+}
+
+/* ── PRÉDICTION ──────────────────────────────────────────────── */
 .pred-pit {
-    background: linear-gradient(135deg, #1a0505, #2a0808);
+    background: linear-gradient(135deg, #2a0a0a, #3a0c0c);
     border: 2px solid #E8002D;
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+    box-shadow: 0 0 30px #E8002D33;
 }
 .pred-nopit {
-    background: linear-gradient(135deg, #051a0d, #082a12);
+    background: linear-gradient(135deg, #062015, #0a2e1c);
     border: 2px solid #00e676;
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+    box-shadow: 0 0 30px #00e67633;
 }
-.pred-title { font-family: 'Rajdhani', sans-serif; font-size: 2rem; font-weight: 700; letter-spacing: 2px; }
-.pred-pit .pred-title   { color: #E8002D; }
-.pred-nopit .pred-title { color: #00e676; }
-.pred-sub { font-size: 0.85rem; color: #aaa; margin-top: 6px; }
-
-/* Section headers */
-.section-header {
+.pred-label {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    padding-left: 12px;
-    border-left: 3px solid #E8002D;
-    margin: 20px 0 12px 0;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #ffffff !important;
 }
+.pred-pit   .pred-label { text-shadow: 0 0 20px #E8002D; }
+.pred-nopit .pred-label { text-shadow: 0 0 20px #00e676; color: #00e676 !important; }
+.pred-sub { font-size: 0.85rem; color: #b0b0c8 !important; margin-top: 8px; }
 
-/* Table */
-.dataframe { background: #12121f !important; }
-
-/* Override Streamlit defaults */
+/* ── STREAMLIT OVERRIDES ─────────────────────────────────────── */
+/* Métriques */
 div[data-testid="stMetric"] {
-    background: #12121f;
-    border: 1px solid #2a2a3e;
-    border-top: 2px solid #E8002D;
-    border-radius: 8px;
-    padding: 12px 16px;
+    background: linear-gradient(135deg, #161730, #1e2040) !important;
+    border: 1px solid #2e3060 !important;
+    border-top: 2px solid #E8002D !important;
+    border-radius: 10px !important;
+    padding: 14px 18px !important;
 }
-div[data-testid="stMetricValue"] { color: #E8002D !important; font-family: 'Rajdhani', sans-serif; font-size: 1.8rem !important; }
-div[data-testid="stMetricLabel"] { color: #aaa !important; font-size: 0.75rem !important; letter-spacing: 1px; text-transform: uppercase; }
-div[data-testid="stMetricDelta"] svg { display: none; }
+div[data-testid="stMetricValue"] {
+    color: #ffffff !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    font-size: 1.9rem !important;
+    font-weight: 700 !important;
+}
+div[data-testid="stMetricLabel"] {
+    color: #9090b0 !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+div[data-testid="stMetricDelta"] { color: #a0a0c0 !important; }
 
 /* Boutons */
-div[data-testid="stButton"] button {
-    background: linear-gradient(135deg, #E8002D, #c0001e) !important;
-    color: white !important;
-    border: none !important;
-    font-family: 'Rajdhani', sans-serif !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 1.5px !important;
-    text-transform: uppercase !important;
-    border-radius: 4px !important;
-    padding: 8px 20px !important;
-}
+div[data-testid="stButton"] button,
 div[data-testid="stFormSubmitButton"] button {
-    background: linear-gradient(135deg, #E8002D, #c0001e) !important;
-    color: white !important;
+    background: linear-gradient(135deg, #E8002D 0%, #c0001e 100%) !important;
+    color: #ffffff !important;
     border: none !important;
     font-family: 'Rajdhani', sans-serif !important;
-    font-size: 1.1rem !important;
+    font-size: 1.05rem !important;
     font-weight: 700 !important;
     letter-spacing: 2px !important;
     text-transform: uppercase !important;
+    border-radius: 5px !important;
+    box-shadow: 0 4px 15px #E8002D44 !important;
 }
 
-/* Tabs */
+/* Onglets */
 div[data-testid="stTabs"] button {
     font-family: 'Rajdhani', sans-serif !important;
     font-weight: 600 !important;
-    letter-spacing: 1px !important;
-    color: #888 !important;
+    letter-spacing: 1.5px !important;
+    color: #8080a0 !important;
+    font-size: 0.9rem !important;
 }
 div[data-testid="stTabs"] button[aria-selected="true"] {
-    color: #E8002D !important;
-    border-bottom: 2px solid #E8002D !important;
+    color: #ffffff !important;
+    border-bottom: 3px solid #E8002D !important;
 }
+div[data-testid="stTabs"] { border-bottom: 1px solid #2e3060 !important; }
 
-/* Progress bar */
-div[data-testid="stProgressBar"] > div { background: #E8002D !important; }
+/* Barre de progression */
+div[data-testid="stProgressBar"] > div > div { background: #E8002D !important; }
 
 /* Inputs */
-div[data-testid="stNumberInput"] input,
-div[data-testid="stSelectbox"] > div { background: #12121f !important; border-color: #2a2a3e !important; color: #e8e8e8 !important; }
+div[data-testid="stNumberInput"] input { background: #161730 !important; border-color: #2e3060 !important; color: #f0f0f0 !important; }
+div[data-baseweb="select"] > div { background: #161730 !important; border-color: #2e3060 !important; color: #f0f0f0 !important; }
+
+/* Texte général */
+p, span, label, div { color: #f0f0f0; }
+.stMarkdown p { color: #d0d0e8 !important; }
+h1, h2, h3 { color: #ffffff !important; }
+
+/* Caption / small */
+.stCaption { color: #8080a0 !important; }
 
 /* Sidebar logo */
-.sidebar-logo {
+.sb-logo {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
-    color: white;
-    letter-spacing: 2px;
+    color: #ffffff !important;
+    letter-spacing: 3px;
     text-transform: uppercase;
 }
-.sidebar-logo span { color: #E8002D; }
+.sb-logo span { color: #E8002D; }
+
+/* Download button */
+div[data-testid="stDownloadButton"] button {
+    background: #161730 !important;
+    border: 1px solid #2e3060 !important;
+    color: #d0d0f0 !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    letter-spacing: 1px !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -278,29 +319,29 @@ div[data-testid="stSelectbox"] > div { background: #12121f !important; border-co
 st.markdown("""
 <div class="f1-header">
     <div>
-        <span class="f1-badge">MLOps</span>
-        <span class="f1-badge" style="background:#1a1a2e; border:1px solid #E8002D; color:#E8002D;">F1 2022–2025</span>
+        <span class="f1-badge badge-red">MLOps</span>
+        <span class="f1-badge badge-white">F1 2022–2025</span>
+        <span class="f1-badge badge-white">ESGI Majeure Data</span>
     </div>
-    <div class="f1-title" style="margin-top:10px;">F1 PIT STOP <span>PREDICTION</span></div>
-    <div class="f1-subtitle">Artificial Intelligence · Real-time Tyre Strategy · ESGI Majeure Data</div>
+    <div class="f1-title">F1 PIT STOP <span>PREDICTION</span></div>
+    <div class="f1-subtitle">Artificial Intelligence · Real-time Tyre Strategy · Machine Learning</div>
 </div>
 """, unsafe_allow_html=True)
 
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown('<div class="sidebar-logo">🏎️ PIT<span>AI</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="sb-logo">🏎️ PIT<span>AI</span></div>', unsafe_allow_html=True)
     st.markdown('<div class="f1-stripe-sm"></div>', unsafe_allow_html=True)
 
-    # Statut des services
-    st.markdown('<div class="section-header" style="font-size:0.8rem; margin:8px 0;">Services</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size:0.72rem; color:#E8002D; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">État des services</div>', unsafe_allow_html=True)
 
     try:
         httpx.get(f"{API_URL}/health", timeout=3)
-        st.markdown('<div class="status-row"><div class="status-dot-ok"></div>API opérationnelle</div>', unsafe_allow_html=True)
+        st.markdown('<div class="status-row"><div class="dot-ok"></div><span style="color:#d0d0f0;">API opérationnelle</span></div>', unsafe_allow_html=True)
         api_ok = True
     except Exception:
-        st.markdown('<div class="status-row"><div class="status-dot-err"></div>API hors ligne</div>', unsafe_allow_html=True)
+        st.markdown('<div class="status-row"><div class="dot-err"></div><span style="color:#d0d0f0;">API hors ligne</span></div>', unsafe_allow_html=True)
         api_ok = False
 
     try:
@@ -308,29 +349,23 @@ with st.sidebar:
         mlflow.set_tracking_uri(MLFLOW_URI)
         client = mlflow.MlflowClient()
         client.search_experiments()
-        st.markdown('<div class="status-row"><div class="status-dot-ok"></div>MLflow opérationnel</div>', unsafe_allow_html=True)
+        st.markdown('<div class="status-row"><div class="dot-ok"></div><span style="color:#d0d0f0;">MLflow opérationnel</span></div>', unsafe_allow_html=True)
         mlflow_ok = True
     except Exception:
-        st.markdown('<div class="status-row"><div class="status-dot-err"></div>MLflow hors ligne</div>', unsafe_allow_html=True)
+        st.markdown('<div class="status-row"><div class="dot-err"></div><span style="color:#d0d0f0;">MLflow hors ligne</span></div>', unsafe_allow_html=True)
         mlflow_ok = False
 
     st.markdown('<div class="f1-stripe-sm"></div>', unsafe_allow_html=True)
 
-    # Liens externes
-    st.markdown('<div class="section-header" style="font-size:0.8rem; margin:8px 0;">Liens</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size:0.72rem; color:#E8002D; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Accès direct</div>', unsafe_allow_html=True)
     st.markdown(f"""
-<a class="ext-link" href="{PUBLIC_API_URL}/docs" target="_blank">
-    <span class="icon">⚡</span> API FastAPI — Documentation
-</a>
-<a class="ext-link" href="{PUBLIC_MLFLOW_URL}" target="_blank">
-    <span class="icon">📊</span> MLflow — Tracking UI
-</a>
+<a class="ext-link" href="{PUBLIC_API_URL}/docs" target="_blank">⚡&nbsp; API FastAPI — Docs interactives</a>
+<a class="ext-link" href="{PUBLIC_MLFLOW_URL}" target="_blank">📊&nbsp; MLflow — Tracking UI</a>
 """, unsafe_allow_html=True)
 
     st.markdown('<div class="f1-stripe-sm"></div>', unsafe_allow_html=True)
 
-    # Équipe
-    st.markdown('<div class="section-header" style="font-size:0.8rem; margin:8px 0;">Développeurs</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size:0.72rem; color:#E8002D; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Équipe</div>', unsafe_allow_html=True)
     st.markdown("""
 <div class="dev-card">
     <div class="dev-name">Fanda Tongnia</div>
@@ -343,14 +378,14 @@ with st.sidebar:
 """, unsafe_allow_html=True)
 
     st.markdown('<div class="f1-stripe-sm"></div>', unsafe_allow_html=True)
-    st.markdown('<div style="font-size:0.7rem; color:#444; text-align:center; letter-spacing:1px;">ESGI · Majeure Data · 2025–2026</div>', unsafe_allow_html=True)
+    st.markdown('<div style="font-size:0.68rem; color:#505070; text-align:center; letter-spacing:1px;">ESGI · Majeure Data · 2025–2026</div>', unsafe_allow_html=True)
 
 
 # ── Onglets ────────────────────────────────────────────────────────────────────
 tab_home, tab_pred, tab_suivi, tab_eval, tab_table = st.tabs([
     "🏠  ACCUEIL",
     "🏎️  PRÉDICTION",
-    "📊  SUIVI MLflow",
+    "📊  SUIVI MLFLOW",
     "📈  ÉVALUATION",
     "📋  BATCH",
 ])
@@ -363,85 +398,50 @@ with tab_home:
     col_main, col_side = st.columns([3, 2])
 
     with col_main:
-        st.markdown('<div class="section-header">Le Projet</div>', unsafe_allow_html=True)
-        st.markdown("""
-<div style="color:#ccc; line-height:1.8; font-size:0.95rem;">
-Projet développé dans le cadre du <strong style="color:white;">fil rouge MLOps</strong>
-à l'ESGI — Majeure Data Engineering.<br><br>
-L'objectif est de prédire si un pilote de Formule 1 va
-<strong style="color:#E8002D;">rentrer aux stands au tour suivant</strong>,
-à partir des données télémétriques disponibles en temps réel : état des pneus,
-temps au tour, position, avancement de la course.
-</div>
-""", unsafe_allow_html=True)
+        st.markdown('<div class="sh">Le Projet</div>', unsafe_allow_html=True)
+        st.markdown('<p style="color:#c8c8e0; line-height:1.9; font-size:0.95rem;">Projet développé dans le cadre du <strong style="color:#ffffff;">fil rouge MLOps</strong> à l\'ESGI — Majeure Data Engineering.<br><br>L\'objectif est de prédire si un pilote de Formule 1 va <strong style="color:#E8002D;">rentrer aux stands au tour suivant</strong>, à partir des données télémétriques : état des pneus, temps au tour, position, avancement de la course.</p>', unsafe_allow_html=True)
 
         st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-header">Stack Technique</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sh">Stack Technique</div>', unsafe_allow_html=True)
 
-        col_t1, col_t2, col_t3 = st.columns(3)
-        with col_t1:
-            st.markdown("""
-<div class="metric-card">
-    <div class="value">RF · XGB · LGBM</div>
-    <div class="label">Modèles ML</div>
-    <div class="delta">GridSearchCV + Optuna</div>
-</div>""", unsafe_allow_html=True)
-        with col_t2:
-            st.markdown("""
-<div class="metric-card">
-    <div class="value">FastAPI</div>
-    <div class="label">API REST</div>
-    <div class="delta">Prédiction temps réel</div>
-</div>""", unsafe_allow_html=True)
-        with col_t3:
-            st.markdown("""
-<div class="metric-card">
-    <div class="value">Airflow</div>
-    <div class="label">Orchestration</div>
-    <div class="delta">Re-entraînement auto</div>
-</div>""", unsafe_allow_html=True)
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown('<div class="metric-card"><div class="val">RF · XGB · LGBM</div><div class="lbl">Modèles ML</div><div class="dlt">GridSearchCV + Optuna</div></div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown('<div class="metric-card"><div class="val">FastAPI</div><div class="lbl">API REST</div><div class="dlt">Prédiction temps réel</div></div>', unsafe_allow_html=True)
+        with c3:
+            st.markdown('<div class="metric-card"><div class="val">Airflow</div><div class="lbl">Orchestration</div><div class="dlt">Re-entraînement auto</div></div>', unsafe_allow_html=True)
 
         st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-header">Architecture</div>', unsafe_allow_html=True)
-        st.code("""
-data/train.csv  →  feature.py  →  train.py  →  model.joblib
-                                      │
-                                 MLflow :5000
-                                      │
-                              api.py  :8000  (FastAPI)
-                                      │
-                           app.py  :8501  (Streamlit) ← ici
-                                      │
-                            Airflow :8080  (re-train hebdo)
-""", language=None)
+        st.markdown('<div class="sh">Architecture</div>', unsafe_allow_html=True)
+        st.code("""data/train.csv  →  feature.py  →  train.py  →  model.joblib
+                                    │
+                               MLflow :5000
+                                    │
+                          api.py  :8000  (FastAPI)
+                                    │
+                       app.py  :8501  (Streamlit)  ← ici
+                                    │
+                        Airflow :8080  (re-train hebdo)""", language=None)
 
     with col_side:
-        st.markdown('<div class="section-header">Statistiques</div>', unsafe_allow_html=True)
+        st.markdown('<div class="sh">Statistiques</div>', unsafe_allow_html=True)
         st.markdown("""
 <div class="metric-card" style="margin-bottom:10px;">
-    <div class="value">440 000</div>
-    <div class="label">Tours de course</div>
-    <div class="delta">F1 saisons 2022 – 2025</div>
+    <div class="val">440 000</div><div class="lbl">Tours de course</div><div class="dlt">F1 saisons 2022–2025</div>
 </div>
 <div class="metric-card" style="margin-bottom:10px;">
-    <div class="value">3</div>
-    <div class="label">Modèles comparés</div>
-    <div class="delta">RandomForest · XGBoost · LightGBM</div>
+    <div class="val">3</div><div class="lbl">Modèles comparés</div><div class="dlt">RandomForest · XGBoost · LightGBM</div>
 </div>
 <div class="metric-card" style="margin-bottom:10px;">
-    <div class="value">PitNextLap</div>
-    <div class="label">Variable cible</div>
-    <div class="delta">Classification binaire 0 / 1</div>
+    <div class="val">PitNextLap</div><div class="lbl">Variable cible</div><div class="dlt">Classification binaire 0 / 1</div>
 </div>
 <div class="metric-card" style="margin-bottom:10px;">
-    <div class="value">12</div>
-    <div class="label">Features</div>
-    <div class="delta">Tyre · Lap · Position · Race</div>
-</div>
-""", unsafe_allow_html=True)
+    <div class="val">12</div><div class="lbl">Features</div><div class="dlt">Tyre · Lap · Position · Race</div>
+</div>""", unsafe_allow_html=True)
 
-        st.markdown('<div class="f1-stripe-sm"></div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-header">Équipe</div>', unsafe_allow_html=True)
+        st.markdown('<div class="f1-stripe-sm" style="margin-top:14px;"></div>', unsafe_allow_html=True)
+        st.markdown('<div class="sh" style="font-size:1rem; margin-top:8px;">Équipe</div>', unsafe_allow_html=True)
         st.markdown("""
 <div class="dev-card">
     <div class="dev-name">Fanda Tongnia</div>
@@ -450,36 +450,33 @@ data/train.csv  →  feature.py  →  train.py  →  model.joblib
 <div class="dev-card">
     <div class="dev-name">Dilane Chatelain</div>
     <div class="dev-role">MLOps Engineer · ESGI Majeure Data</div>
-</div>
-""", unsafe_allow_html=True)
+</div>""", unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# ONGLET 1 — PRÉDICTION UNITAIRE
+# ONGLET 1 — PRÉDICTION
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_pred:
-    st.markdown('<div class="section-header">Prédiction d\'un Tour</div>', unsafe_allow_html=True)
-    st.markdown('<div style="color:#888; font-size:0.88rem; margin-bottom:16px;">Renseignez les données télémétriques d\'un tour pour obtenir une prédiction instantanée via l\'API.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Prédiction d\'un Tour</div>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#9090b0; font-size:0.88rem; margin-bottom:16px;">Renseignez les données télémétriques pour obtenir une prédiction instantanée via l\'API.</p>', unsafe_allow_html=True)
 
     with st.form("predict_form"):
         col1, col2 = st.columns(2)
-
         with col1:
-            st.markdown('<div style="color:#E8002D; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Données de course</div>', unsafe_allow_html=True)
-            year            = st.number_input("Année",                  min_value=2018, max_value=2030, value=2024)
-            lap_number      = st.number_input("Numéro de tour",         min_value=1, value=35)
-            stint           = st.number_input("Stint",                  min_value=1, value=2)
-            tyre_life       = st.number_input("Âge des pneus (tours)",  min_value=0, value=20)
-            position        = st.number_input("Position en course",     min_value=1, max_value=20, value=4)
+            st.markdown('<div style="color:#E8002D; font-size:0.72rem; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Données de course</div>', unsafe_allow_html=True)
+            year            = st.number_input("Année",                 min_value=2018, max_value=2030, value=2024)
+            lap_number      = st.number_input("Numéro de tour",        min_value=1, value=35)
+            stint           = st.number_input("Stint",                 min_value=1, value=2)
+            tyre_life       = st.number_input("Âge des pneus (tours)", min_value=0, value=20)
+            position        = st.number_input("Position en course",    min_value=1, max_value=20, value=4)
             compound        = st.selectbox("Compound", ["SOFT", "MEDIUM", "HARD", "INTERMEDIATE", "WET"], index=1)
-
         with col2:
-            st.markdown('<div style="color:#E8002D; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Données de performance</div>', unsafe_allow_html=True)
-            lap_time_s      = st.number_input("Temps au tour (s)",          min_value=0.1, value=91.8)
-            lap_time_delta  = st.number_input("Delta temps (s)",             value=0.4)
-            cumul_deg       = st.number_input("Dégradation cumulée",         min_value=0.0, value=1.5)
+            st.markdown('<div style="color:#E8002D; font-size:0.72rem; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Données de performance</div>', unsafe_allow_html=True)
+            lap_time_s      = st.number_input("Temps au tour (s)",       min_value=0.1, value=91.8)
+            lap_time_delta  = st.number_input("Delta temps (s)",          value=0.4)
+            cumul_deg       = st.number_input("Dégradation cumulée",      min_value=0.0, value=1.5)
             race_progress   = st.slider("Avancement course", 0.0, 1.0, 0.57, format="%.0%%")
-            position_change = st.number_input("Changement de position",      value=0)
+            position_change = st.number_input("Changement de position",   value=0)
             pit_stop        = st.selectbox("Pit stop ce tour ?", [0, 1], format_func=lambda x: "Non" if x == 0 else "Oui")
 
         submitted = st.form_submit_button("⚡  LANCER LA PRÉDICTION", use_container_width=True)
@@ -500,25 +497,14 @@ with tab_pred:
             proba = resp.json()["probability"]
 
             st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
-            col_res, col_gauge = st.columns([2, 1])
-
+            col_res, col_g = st.columns([2, 1])
             with col_res:
                 if pred == 1:
-                    st.markdown(f"""
-<div class="pred-box pred-pit">
-    <div class="pred-title">🛞 PIT STOP PRÉVU</div>
-    <div class="pred-sub">Le modèle prédit un arrêt aux stands au prochain tour</div>
-</div>""", unsafe_allow_html=True)
+                    st.markdown(f'<div class="pred-pit"><div class="pred-label">🛞 PIT STOP PRÉVU</div><div class="pred-sub">Le modèle prédit un arrêt aux stands au prochain tour</div></div>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f"""
-<div class="pred-box pred-nopit">
-    <div class="pred-title">✅ PAS DE PIT STOP</div>
-    <div class="pred-sub">Le pilote devrait continuer en piste</div>
-</div>""", unsafe_allow_html=True)
-
-            with col_gauge:
+                    st.markdown(f'<div class="pred-nopit"><div class="pred-label">✅ PAS DE PIT STOP</div><div class="pred-sub">Le pilote devrait continuer en piste</div></div>', unsafe_allow_html=True)
+            with col_g:
                 st.metric("Probabilité pit stop", f"{proba:.1%}")
-                st.markdown(f'<div style="color:#888; font-size:0.78rem; margin-top:-8px; letter-spacing:1px;">CONFIANCE DU MODÈLE</div>', unsafe_allow_html=True)
                 st.progress(proba)
 
         except httpx.HTTPStatusError as e:
@@ -531,7 +517,7 @@ with tab_pred:
 # ONGLET 2 — SUIVI MLFLOW
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_suivi:
-    st.markdown('<div class="section-header">Suivi des Runs MLflow</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Suivi des Runs MLflow</div>', unsafe_allow_html=True)
 
     if not mlflow_ok:
         st.warning("MLflow n'est pas joignable.")
@@ -550,36 +536,31 @@ with tab_suivi:
     if exp is None:
         st.info("Aucune expérience trouvée.")
     else:
-        runs = client.search_runs(
-            experiment_ids=[exp.experiment_id],
-            order_by=["start_time DESC"],
-            max_results=50,
-        )
+        runs = client.search_runs(experiment_ids=[exp.experiment_id], order_by=["start_time DESC"], max_results=50)
         if not runs:
             st.info("Aucun run enregistré.")
         else:
             rows = []
             for r in runs:
                 rows.append({
-                    "Run"      : r.info.run_name or r.info.run_id[:8],
-                    "Statut"   : r.info.status,
-                    "F1"       : round(r.data.metrics.get("f1", float("nan")), 4),
-                    "AUC-ROC"  : round(r.data.metrics.get("roc_auc", float("nan")), 4),
-                    "Accuracy" : round(r.data.metrics.get("accuracy", float("nan")), 4),
-                    "Recall"   : round(r.data.metrics.get("recall", float("nan")), 4),
-                    "Modèle"   : r.data.params.get("model", "—"),
-                    "Date"     : pd.to_datetime(r.info.start_time, unit="ms").strftime("%Y-%m-%d %H:%M"),
+                    "Run"     : r.info.run_name or r.info.run_id[:8],
+                    "Statut"  : r.info.status,
+                    "F1"      : round(r.data.metrics.get("f1", float("nan")), 4),
+                    "AUC-ROC" : round(r.data.metrics.get("roc_auc", float("nan")), 4),
+                    "Accuracy": round(r.data.metrics.get("accuracy", float("nan")), 4),
+                    "Recall"  : round(r.data.metrics.get("recall", float("nan")), 4),
+                    "Modèle"  : r.data.params.get("model", "—"),
+                    "Date"    : pd.to_datetime(r.info.start_time, unit="ms").strftime("%Y-%m-%d %H:%M"),
                 })
             df_runs = pd.DataFrame(rows)
             st.dataframe(df_runs, use_container_width=True, hide_index=True)
-
             st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
             col_f1, col_auc = st.columns(2)
             with col_f1:
-                st.markdown('<div style="color:#E8002D; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">F1 par run</div>', unsafe_allow_html=True)
+                st.markdown('<div style="color:#E8002D; font-size:0.72rem; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">F1 par run</div>', unsafe_allow_html=True)
                 st.bar_chart(df_runs.set_index("Run")["F1"])
             with col_auc:
-                st.markdown('<div style="color:#E8002D; font-size:0.75rem; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">AUC-ROC par run</div>', unsafe_allow_html=True)
+                st.markdown('<div style="color:#E8002D; font-size:0.72rem; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">AUC-ROC par run</div>', unsafe_allow_html=True)
                 st.bar_chart(df_runs.set_index("Run")["AUC-ROC"])
 
 
@@ -587,7 +568,7 @@ with tab_suivi:
 # ONGLET 3 — ÉVALUATION
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_eval:
-    st.markdown('<div class="section-header">Évaluation du Dernier Modèle</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Évaluation du Dernier Modèle</div>', unsafe_allow_html=True)
 
     if not mlflow_ok:
         st.warning("MLflow n'est pas joignable.")
@@ -600,11 +581,7 @@ with tab_eval:
         if exp is None:
             st.info("Aucune expérience trouvée.")
         else:
-            runs = client.search_runs(
-                experiment_ids=[exp.experiment_id],
-                order_by=["start_time DESC"],
-                max_results=1,
-            )
+            runs = client.search_runs(experiment_ids=[exp.experiment_id], order_by=["start_time DESC"], max_results=1)
             if not runs:
                 st.info("Aucun run trouvé.")
             else:
@@ -612,7 +589,7 @@ with tab_eval:
                 metrics = run.data.metrics
                 params  = run.data.params
 
-                st.markdown(f'<div style="color:#888; font-size:0.82rem; letter-spacing:1px;">RUN : <span style="color:#fff;">{run.info.run_name}</span> &nbsp;·&nbsp; ID : <span style="color:#E8002D;">{run.info.run_id[:8]}</span> &nbsp;·&nbsp; Modèle : <span style="color:#fff;">{params.get("model","—")}</span> &nbsp;·&nbsp; {pd.to_datetime(run.info.start_time, unit="ms").strftime("%Y-%m-%d %H:%M")}</div>', unsafe_allow_html=True)
+                st.markdown(f'<p style="color:#9090b0; font-size:0.82rem; letter-spacing:1px;">Run : <strong style="color:#ffffff;">{run.info.run_name}</strong> &nbsp;·&nbsp; ID : <strong style="color:#E8002D;">{run.info.run_id[:8]}</strong> &nbsp;·&nbsp; Modèle : <strong style="color:#ffffff;">{params.get("model","—")}</strong> &nbsp;·&nbsp; <span style="color:#9090b0;">{pd.to_datetime(run.info.start_time, unit="ms").strftime("%Y-%m-%d %H:%M")}</span></p>', unsafe_allow_html=True)
                 st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
 
                 c1, c2, c3, c4, c5 = st.columns(5)
@@ -623,19 +600,15 @@ with tab_eval:
                 c5.metric("Recall",    f"{metrics.get('recall', 0):.4f}")
 
                 st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
-                st.markdown('<div class="section-header">Validation des Seuils</div>', unsafe_allow_html=True)
+                st.markdown('<div class="sh" style="font-size:1rem;">Validation des seuils</div>', unsafe_allow_html=True)
                 f1_ok  = metrics.get("f1", 0) >= 0.50
                 auc_ok = metrics.get("roc_auc", 0) >= 0.80
                 col_v1, col_v2 = st.columns(2)
-                col_v1.metric("F1 ≥ 0.50",
-                              "✅ VALIDÉ" if f1_ok else "❌ INSUFFISANT",
-                              delta=f"{metrics.get('f1', 0) - 0.50:+.4f}")
-                col_v2.metric("AUC-ROC ≥ 0.80",
-                              "✅ VALIDÉ" if auc_ok else "❌ INSUFFISANT",
-                              delta=f"{metrics.get('roc_auc', 0) - 0.80:+.4f}")
+                col_v1.metric("F1 ≥ 0.50",     "✅ VALIDÉ" if f1_ok else "❌ INSUFFISANT", delta=f"{metrics.get('f1',0)-0.50:+.4f}")
+                col_v2.metric("AUC-ROC ≥ 0.80", "✅ VALIDÉ" if auc_ok else "❌ INSUFFISANT", delta=f"{metrics.get('roc_auc',0)-0.80:+.4f}")
 
                 st.markdown('<div class="f1-stripe"></div>', unsafe_allow_html=True)
-                st.markdown('<div class="section-header">Hyperparamètres</div>', unsafe_allow_html=True)
+                st.markdown('<div class="sh" style="font-size:1rem;">Hyperparamètres</div>', unsafe_allow_html=True)
                 st.json({k: v for k, v in params.items() if k != "model"})
 
 
@@ -643,8 +616,8 @@ with tab_eval:
 # ONGLET 4 — BATCH
 # ══════════════════════════════════════════════════════════════════════════════
 with tab_table:
-    st.markdown('<div class="section-header">Prévisions Batch</div>', unsafe_allow_html=True)
-    st.markdown('<div style="color:#888; font-size:0.88rem; margin-bottom:16px;">Importez un CSV ou utilisez l\'échantillon pour prédire plusieurs tours en masse.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sh">Prévisions Batch</div>', unsafe_allow_html=True)
+    st.markdown('<p style="color:#9090b0; font-size:0.88rem; margin-bottom:16px;">Importez un CSV ou utilisez l\'échantillon pour prédire plusieurs tours en masse.</p>', unsafe_allow_html=True)
 
     COL_MAP = {
         "LapTime (s)": "LapTime_s",
@@ -654,53 +627,50 @@ with tab_table:
         "RaceProgress": "RaceProgress", "Position_Change": "Position_Change", "PitStop": "PitStop",
     }
 
-    uploaded = st.file_uploader("Importer un CSV (colonnes F1 brutes)", type="csv")
-
+    uploaded = st.file_uploader("Importer un CSV", type="csv")
     if uploaded:
         df_raw = pd.read_csv(uploaded)
     else:
-        st.caption(f"Aucun fichier importé — utilisation de `{SAMPLE_CSV}`")
+        st.caption(f"Aucun fichier — utilisation de `{SAMPLE_CSV}`")
         try:
             df_raw = pd.read_csv(SAMPLE_CSV)
         except FileNotFoundError:
             st.error(f"Fichier introuvable : {SAMPLE_CSV}")
             st.stop()
 
-    n_rows = st.slider("Nombre de lignes à prédire", min_value=5, max_value=min(200, len(df_raw)), value=20)
+    n_rows   = st.slider("Nombre de lignes", min_value=5, max_value=min(200, len(df_raw)), value=20)
     df_sample = df_raw.sample(n=n_rows, random_state=42).reset_index(drop=True)
 
     if st.button("⚡  LANCER LES PRÉVISIONS BATCH", use_container_width=True):
         results = []
         errors  = 0
-        progress_bar = st.progress(0, text="Prédictions en cours…")
+        bar = st.progress(0, text="Prédictions en cours…")
 
         with httpx.Client(base_url=API_URL, timeout=10.0) as c:
             for i, row in df_sample.iterrows():
                 try:
                     payload = {api_col: row[csv_col] for csv_col, api_col in COL_MAP.items() if csv_col in row}
                     payload["Compound"] = str(payload.get("Compound", "MEDIUM")).upper()
-                    for k in ["Year", "LapNumber", "Stint", "TyreLife", "Position", "Position_Change", "PitStop"]:
+                    for k in ["Year","LapNumber","Stint","TyreLife","Position","Position_Change","PitStop"]:
                         if k in payload: payload[k] = int(payload[k])
-                    for k in ["LapTime_s", "LapTime_Delta", "Cumulative_Degradation", "RaceProgress"]:
+                    for k in ["LapTime_s","LapTime_Delta","Cumulative_Degradation","RaceProgress"]:
                         if k in payload: payload[k] = float(payload[k])
-
                     resp = c.post("/predict", json=payload)
                     resp.raise_for_status()
                     results.append({
-                        "Tour"              : int(row.get("LapNumber", i)),
-                        "Compound"          : row.get("Compound", "—"),
-                        "Âge pneu"          : int(row.get("TyreLife", 0)),
-                        "Avancement"        : f"{float(row.get('RaceProgress', 0)):.0%}",
-                        "Réel"              : int(row["PitNextLap"]) if "PitNextLap" in row else "—",
-                        "Prédiction"        : "🛞 PIT" if resp.json()["prediction"] == 1 else "✅ NO PIT",
-                        "Proba"             : f"{resp.json()['probability']:.1%}",
+                        "Tour"      : int(row.get("LapNumber", i)),
+                        "Compound"  : row.get("Compound", "—"),
+                        "Âge pneu"  : int(row.get("TyreLife", 0)),
+                        "Avancement": f"{float(row.get('RaceProgress', 0)):.0%}",
+                        "Réel"      : int(row["PitNextLap"]) if "PitNextLap" in row else "—",
+                        "Prédiction": "🛞 PIT" if resp.json()["prediction"] == 1 else "✅ NO PIT",
+                        "Proba"     : f"{resp.json()['probability']:.1%}",
                     })
                 except Exception:
                     errors += 1
-                progress_bar.progress((i + 1) / n_rows)
+                bar.progress((i + 1) / n_rows)
 
-        progress_bar.empty()
-
+        bar.empty()
         if results:
             df_out = pd.DataFrame(results)
             n_pit  = sum(1 for r in results if "PIT" in r["Prédiction"])
@@ -710,7 +680,6 @@ with tab_table:
             c2.metric("Pit stops prévus", n_pit, delta=f"{n_pit/len(results):.0%} des tours")
             c3.metric("Erreurs",          errors)
             st.dataframe(df_out, use_container_width=True, hide_index=True)
-            csv_dl = df_out.to_csv(index=False).encode()
-            st.download_button("⬇️  Télécharger les résultats CSV", csv_dl, "predictions_f1.csv", "text/csv")
+            st.download_button("⬇️  Télécharger CSV", df_out.to_csv(index=False).encode(), "predictions_f1.csv", "text/csv")
         else:
-            st.error("Aucune prédiction obtenue — vérifiez que l'API est démarrée.")
+            st.error("Aucune prédiction — l'API est-elle démarrée ?")
