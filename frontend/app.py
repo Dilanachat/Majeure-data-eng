@@ -523,7 +523,7 @@ with tab_pred:
             lap_time_s      = st.number_input("Temps au tour (s)",       min_value=0.1, value=91.8)
             lap_time_delta  = st.number_input("Delta temps (s)",          value=0.4)
             cumul_deg       = st.number_input("Dégradation cumulée",      min_value=0.0, value=1.5)
-            race_progress   = st.slider("Avancement course", 0.0, 1.0, 0.57, format="%.0%%")
+            race_progress   = st.slider("Avancement course (0.0 → 1.0)", 0.0, 1.0, 0.57)
             position_change = st.number_input("Changement de position",   value=0)
             pit_stop        = st.selectbox("Pit stop ce tour ?", [0, 1], format_func=lambda x: "Non" if x == 0 else "Oui")
 
