@@ -63,6 +63,8 @@ services:
     environment:
       API_URL: http://api:8000
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      PUBLIC_API_URL: http://88.96.50.33:8000
+      PUBLIC_MLFLOW_URL: http://88.96.50.33:5000
     # S14-5 : exposition du port 8501
     ports:
       - "8501:8501"

@@ -368,11 +368,7 @@ with st.sidebar:
     st.markdown('<div style="font-size:0.72rem; color:#E8002D; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:6px;">Équipe</div>', unsafe_allow_html=True)
     st.markdown("""
 <div class="dev-card">
-    <div class="dev-name">Fanda Tongnia</div>
-    <div class="dev-role">MLOps Engineer · ESGI Majeure Data</div>
-</div>
-<div class="dev-card">
-    <div class="dev-name">Dilane Chatelain</div>
+    <div class="dev-name">Fanda Tongnia Dilane Chatelain</div>
     <div class="dev-role">MLOps Engineer · ESGI Majeure Data</div>
 </div>
 """, unsafe_allow_html=True)
@@ -444,11 +440,7 @@ with tab_home:
         st.markdown('<div class="sh" style="font-size:1rem; margin-top:8px;">Équipe</div>', unsafe_allow_html=True)
         st.markdown("""
 <div class="dev-card">
-    <div class="dev-name">Fanda Tongnia</div>
-    <div class="dev-role">MLOps Engineer · ESGI Majeure Data</div>
-</div>
-<div class="dev-card">
-    <div class="dev-name">Dilane Chatelain</div>
+    <div class="dev-name">Fanda Tongnia Dilane Chatelain</div>
     <div class="dev-role">MLOps Engineer · ESGI Majeure Data</div>
 </div>""", unsafe_allow_html=True)
 
