@@ -283,7 +283,22 @@ div[data-testid="stProgressBar"] > div > div { background: #E8002D !important; }
 
 /* Inputs */
 div[data-testid="stNumberInput"] input { background: #161730 !important; border-color: #2e3060 !important; color: #f0f0f0 !important; }
+
+/* Selectbox — champ fermé */
 div[data-baseweb="select"] > div { background: #161730 !important; border-color: #2e3060 !important; color: #f0f0f0 !important; }
+div[data-baseweb="select"] * { color: #f0f0f0 !important; }
+
+/* Selectbox — liste déroulante ouverte */
+ul[role="listbox"] { background: #161730 !important; border: 1px solid #2e3060 !important; }
+ul[role="listbox"] li { background: #161730 !important; color: #f0f0f0 !important; }
+ul[role="listbox"] li:hover { background: #1e0a12 !important; color: #ffffff !important; }
+ul[role="listbox"] li[aria-selected="true"] { background: #E8002D22 !important; color: #ffffff !important; }
+div[data-baseweb="popover"] { background: #161730 !important; }
+div[data-baseweb="popover"] * { background: #161730 !important; color: #f0f0f0 !important; }
+div[data-baseweb="menu"] { background: #161730 !important; }
+div[data-baseweb="menu"] * { color: #f0f0f0 !important; }
+div[data-baseweb="menu"] li:hover,
+div[data-baseweb="menu"] [aria-selected="true"] { background: #E8002D33 !important; }
 
 /* Texte général */
 p, span, label, div { color: #f0f0f0; }
